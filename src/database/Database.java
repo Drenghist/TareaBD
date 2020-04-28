@@ -157,6 +157,8 @@ public class Database {
                 JOptionPane.showMessageDialog(null, "Tabla ya existe en la base de datos");
             } else if (ex.getMessage().contains("ORA-00942")){
                 JOptionPane.showMessageDialog(null, "Falta tabla de referencia en la base de datos");
+            } else if (ex.getMessage().contains("PROG.SYS_C004728")){
+                JOptionPane.showMessageDialog(null, "Clave primaria duplicada (¿os datos xa estaban creados?)");
             } else{
                 System.out.println(ex.getMessage());
                 ex.printStackTrace();
