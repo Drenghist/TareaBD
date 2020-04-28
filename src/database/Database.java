@@ -148,15 +148,6 @@ public class Database {
             }
             
             
-            /*---- 
-            Statement stm=con.createStatement();
-            ResultSet rs=stm.executeQuery("SELECT * FROM LINEAS");
-            while(rs.next()){
-                System.out.println(rs.getString("CANTIDAD"));
-            }
-            stm.executeUpdate("UPDATE EMPLEADOS SET NOMBRE ='Jose Luis Perez' WHERE CODIGO = 1");
-
-            con.close();*/
         }
         catch(Exception ex)
         {
