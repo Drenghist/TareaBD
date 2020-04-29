@@ -5,15 +5,17 @@
  */
 package database;
 
+import java.awt.HeadlessException;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Scanner;
 import javax.swing.JOptionPane;
-import static javax.swing.JOptionPane.showInputDialog;
 
 /**
  *
  * @author Alex
+ * @version 2.0
+ * @date 29/04/2020
  */
 public class Database {
 
@@ -27,13 +29,11 @@ public class Database {
     double telefono;
     int perso;
     int contador, cod_cli, cod_esc;
-    ArrayList <Integer> codcliente = new ArrayList<Integer>();
-    int seleccion = 99;
+    ArrayList <Integer> codcliente = new ArrayList<>();
     ResultSet rs;
     
         try
         {
-            
             String user=JOptionPane.showInputDialog(null, "Introduza usuario base de datos");
             String pass=JOptionPane.showInputDialog(null, "Introduza contrasinal");
 
@@ -41,20 +41,24 @@ public class Database {
             Class.forName("oracle.jdbc.driver.OracleDriver");
             // conecto a miña base de datos
             Connection con = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:XE",user,pass );
-            Statement stm=null;
-            System.out.println("Conectado á base de datos");
+            Statement stm;
+            JOptionPane.showMessageDialog(null, "Conectado á base de datos co usuario "+user,"Conectado",JOptionPane.INFORMATION_MESSAGE);
 
 
             while(!flag){
                 switch (Menu()){
-                    case 1:
+                    case 1: //Crear novo cliente
                         System.out.println("\nIntroducir datos de novo cliente\n"
                                 + "----------------------------------\n\n");
                         try{
-                            System.out.print("Introduza nome: ");
+                            //Obteño os datos por teclado
+                            System.out.print("Introduza nome (max 20 caracteres): ");
                             nome = teclado.nextLine();
-                            System.out.print("Introduza teléfono: ");
+                            System.out.print("Introduza teléfono (max 10 díxitos): ");
                             telefono = Double.parseDouble(teclado.nextLine());
+                            
+                            //Consulto os códigos que existen na BD e escollo o seguinte libre
+                            codcliente.clear();
                             stm=con.createStatement();
                             rs=stm.executeQuery("SELECT COD_CLIENTE FROM CLIENTES");
                             while(rs.next()){
@@ -64,27 +68,33 @@ public class Database {
                             while (codcliente.contains(contador)){
                                 contador ++;
                             }
+                            
+                            //Inserto os datos na BD
                             stm.executeUpdate("INSERT INTO CLIENTES ("
                                     + "COD_CLIENTE,NOMBRE,TELEFONO)"
                                     + "VALUES ("
                                     + contador+",'"+nome+"',"+telefono+")");
-                        }catch(Exception ex){
+                            JOptionPane.showMessageDialog(null, "Cliente creado","Cliente creado correctamente",JOptionPane.INFORMATION_MESSAGE);
+                            
+                        }catch(NumberFormatException | SQLException ex){
                             System.out.println("Datos introducidos erróneos:\n"
                                     + ""+ex.getMessage());        
                         }
-                        codcliente.clear();
-                        JOptionPane.showMessageDialog(null, "Cliente creado","Cliente creado correctamente",JOptionPane.INFORMATION_MESSAGE);
                         break;
-                    case 2:
+                    case 2: //Crear nova escritura
                         System.out.println("\nIntroducir datos de nova escritura\n"
                                 + "----------------------------------\n\n");
                         try{
-                            System.out.print("Introduza tipo de documento (4 caracteres): ");
+                            //Obteño os datos por teclado
+                            System.out.print("Introduza tipo de documento (max 4 caracteres): ");
                             tipo = teclado.nextLine();
-                            System.out.print("Introduza nome do ficheiro: ");
+                            System.out.print("Introduza nome do ficheiro (max 40 caracteres): ");
                             fich = teclado.nextLine();
-                            System.out.print("Introduza persoas involucradas: ");
+                            System.out.print("Introduza persoas involucradas (max 2 díxitos: ");
                             perso = Integer.parseInt(teclado.nextLine());
+                            
+                            //Consulto os códigos que existen na BD e escollo o seguinte libre
+                            codcliente.clear();
                             stm=con.createStatement();
                             rs=stm.executeQuery("SELECT CODIGO FROM ESCRITURAS");
                             while(rs.next()){
@@ -94,17 +104,20 @@ public class Database {
                             while (codcliente.contains(contador)){
                                 contador ++;
                             }
+                            
+                            //Inserto os datos na BD
                             stm.executeUpdate("INSERT INTO ESCRITURAS "
                                     + "VALUES ("
                                     + contador+",'"+tipo+"','"+fich+"',"+perso+")");
-                        }catch(Exception ex){
+                            JOptionPane.showMessageDialog(null, "Escritura creada","Escritura creada correctamente",JOptionPane.INFORMATION_MESSAGE);
+                            
+                        }catch(NumberFormatException | SQLException ex){
                             System.out.println("Datos introducidos erróneos:\n"
                                     + ""+ex.getMessage());        
                         }
-                        codcliente.clear();
-                        JOptionPane.showMessageDialog(null, "Escritura creada","Escritura creada correctamente",JOptionPane.INFORMATION_MESSAGE);
                         break;
-                    case 4:
+                        
+                    case 4: //Mostro os datos de clientes por pantalla
                         stm=con.createStatement();
                         rs=stm.executeQuery("SELECT * FROM CLIENTES");
                         System.out.println("\nDatos de Clientes:\n"
@@ -114,27 +127,42 @@ public class Database {
                         }
                         System.out.println("\n");
                         break;
-                    case 5:
+                        
+                    case 5: //Modifico o cliente
                         System.out.println("\nModificar cliente\n"
                                 + "----------------------------------\n\n");
                         try{
+                            //Solicito os datos por teclado
                             System.out.print("Introduza código: ");
                             cod_cli = Integer.parseInt(teclado.nextLine());
-                            System.out.print("Introduza nome: ");
+                            System.out.print("Introduza nome (max 20 caracteres): ");
                             nome = teclado.nextLine();
-                            System.out.print("Introduza teléfono: ");
+                            System.out.print("Introduza teléfono (max 10 díxitos): ");
                             telefono = Double.parseDouble(teclado.nextLine());
+                            
+                            // búsqueda en clientes para verificar que existe
+                            codcliente.clear();
                             stm=con.createStatement();
+                            rs=stm.executeQuery("SELECT COD_CLIENTE FROM CLIENTES");
+                            while(rs.next()){
+                                codcliente.add(rs.getInt("COD_CLIENTE"));
+                            }
+                            if (!codcliente.contains(cod_cli)){
+                                throw new Exception("Código cliente non existe");
+                            }
+                            
+                            //Actualizo a BD
                             stm.executeUpdate("UPDATE CLIENTES SET NOMBRE = '"+nome+"' "
                                     + ",TELEFONO ="+telefono+" WHERE COD_CLIENTE = "+cod_cli+"");
+                            JOptionPane.showMessageDialog(null, "Cliente modificado","Cliente modificado correctamente",JOptionPane.INFORMATION_MESSAGE); 
                             
                         } catch (Exception ex){
                             System.out.println("Datos introducidos erróneos:\n"
                                     + ""+ex.getMessage());
                         }
-                        JOptionPane.showMessageDialog(null, "Cliente modificado","Cliente modificado correctamente",JOptionPane.INFORMATION_MESSAGE);   
                         break;
-                    case 6:
+                        
+                    case 6: //Mostro os datos de clientes por pantalla
                         stm=con.createStatement();
                         rs=stm.executeQuery("SELECT * FROM ESCRITURAS");
                         System.out.println("\nDatos de Escrituras:\n"
@@ -144,50 +172,23 @@ public class Database {
                         }
                         System.out.println("\n");
                         break; 
-                    case 7:
+                    case 7: //Modifico a escritura
                         System.out.println("\nModificar escritura\n"
                                 + "----------------------------------\n\n");
                         try{
+                            //Solicito os datos por teclado
                             System.out.print("Introduza código: ");
                             cod_esc = Integer.parseInt(teclado.nextLine());
-                            System.out.print("Introduza tipo de documento (4 caracteres): ");
+                            System.out.print("Introduza tipo de documento (max 4 caracteres): ");
                             tipo = teclado.nextLine();
-                            System.out.print("Introduza nome do ficheiro: ");
+                            System.out.print("Introduza nome do ficheiro (max 40 caracteres): ");
                             fich = teclado.nextLine();
-                            System.out.print("Introduza persoas involucradas: ");
+                            System.out.print("Introduza persoas involucradas (max 2 díxitos): ");
                             perso = Integer.parseInt(teclado.nextLine());
-                            stm=con.createStatement();
-                            stm.executeUpdate("UPDATE ESCRITURAS SET TIPO = '"+tipo+"' "
-                                    + ",NOM_FICH ='"+fich+"' ,NUM_INTERV = "+perso+" WHERE CODIGO = "+cod_esc+"");
-                            
-                        } catch (Exception ex){
-                            System.out.println("Datos introducidos erróneos:\n"
-                                    + ""+ex.getMessage());
-                        }
-                        JOptionPane.showMessageDialog(null, "Escritura modificada","Escritura modificada correctamente",JOptionPane.INFORMATION_MESSAGE);      
-                        break;    
-                        
-                    case 3:  
-                        System.out.println("\nVincular rexistros\n"
-                                + "----------------------------------\n\n");
-
-                        try{
-                            System.out.print("Introduza código de cliente: ");
-                            cod_cli = Integer.parseInt(teclado.nextLine());
-                            System.out.print("Introduza código de escritura: ");
-                            cod_esc = Integer.parseInt(teclado.nextLine());
-                            stm=con.createStatement();
-                            // búsqueda en clientes para verificar que existe
-                            rs=stm.executeQuery("SELECT COD_CLIENTE FROM CLIENTES");
-                            while(rs.next()){
-                                codcliente.add(rs.getInt("COD_CLIENTE"));
-                            }
-                            if (!codcliente.contains(cod_cli)){
-                                throw new Exception("Código cliente non existe");
-                            }
-                            codcliente.clear();
                             
                             //búsqueda en escrituras para verificar que existe
+                            codcliente.clear();
+                            stm=con.createStatement();
                             rs=stm.executeQuery("SELECT CODIGO FROM ESCRITURAS");
                             while(rs.next()){
                                 codcliente.add(rs.getInt("CODIGO"));
@@ -195,28 +196,63 @@ public class Database {
                             if (!codcliente.contains(cod_esc)){
                                 throw new Exception("Código escritura non existe");
                             }
+                            
+                            //Actualizo a BD
+                            stm.executeUpdate("UPDATE ESCRITURAS SET TIPO = '"+tipo+"' "
+                                    + ",NOM_FICH ='"+fich+"' ,NUM_INTERV = "+perso+" WHERE CODIGO = "+cod_esc+"");
+                            JOptionPane.showMessageDialog(null, "Escritura modificada","Escritura modificada correctamente",JOptionPane.INFORMATION_MESSAGE); 
+                            
+                        } catch (Exception ex){
+                            System.out.println("Datos introducidos erróneos:\n"
+                                    + ""+ex.getMessage());
+                        }
+                        break;    
+                        
+                    case 3:  //Vínculo de clientes con escrituras
+                        System.out.println("\nVincular rexistros\n"
+                                + "----------------------------------\n\n");
+
+                        try{
+                            //Solicito datos por teclado
+                            System.out.print("Introduza código de cliente: ");
+                            cod_cli = Integer.parseInt(teclado.nextLine());
+                            System.out.print("Introduza código de escritura: ");
+                            cod_esc = Integer.parseInt(teclado.nextLine());
+                            stm=con.createStatement();
+                            
+                            // búsqueda en clientes para verificar que existe
                             codcliente.clear();
+                            rs=stm.executeQuery("SELECT COD_CLIENTE FROM CLIENTES");
+                            while(rs.next()){
+                                codcliente.add(rs.getInt("COD_CLIENTE"));
+                            }
+                            if (!codcliente.contains(cod_cli)){
+                                throw new Exception("Código cliente non existe");
+                            }
                             
-                            // Introduzo vínculo
+                            //búsqueda en escrituras para verificar que existe
+                            codcliente.clear();
+                            rs=stm.executeQuery("SELECT CODIGO FROM ESCRITURAS");
+                            while(rs.next()){
+                                codcliente.add(rs.getInt("CODIGO"));
+                            }
+                            if (!codcliente.contains(cod_esc)){
+                                throw new Exception("Código escritura non existe");
+                            }
                             
+                            // Introduzo vínculo en BD
                             stm.executeUpdate("INSERT INTO ESCCLI "
                                     + "VALUES ("
                                     + cod_cli+","+cod_esc+")");
                             JOptionPane.showMessageDialog(null, "Vínculo creado correctamente","Vínculo creado",JOptionPane.INFORMATION_MESSAGE);
-
                             
                         }catch (Exception ex){
                             System.out.println("Datos introducidos erróneos:\n"
                                     + ""+ex.getMessage());
                         }    
-                            
-                            
-                            
-                            
-                            
-                        codcliente.clear();    
                         break;
-                    case 8:
+                        
+                    case 8: //Mostra os clientes con escrituras
                         System.out.println("\nClientes con escrituras\n"
                                 + "----------------------------------\n\n");
                         stm=con.createStatement();
@@ -229,7 +265,8 @@ public class Database {
                         }
                         System.out.println("\n");
                         break;    
-                    case 9:
+                        
+                    case 9: //Sae do programa
                         System.out.println("Saíndo do programa");
                         con.close();
                         flag = true;
@@ -239,19 +276,22 @@ public class Database {
             
             
         }
-        catch(Exception ex)
+        catch(HeadlessException | ClassNotFoundException | SQLException ex)
         {
             if (ex.getMessage().contains("ORA-01017")){
                 JOptionPane.showMessageDialog(null, "Usuario de base de datos erróneo");
             } else{
                 System.out.println(ex.getMessage());
-                ex.printStackTrace();
             }
         }
         
 
     }        
     
+    /**
+     *
+     * @return opción seleccionada
+     */
     public static int Menu(){
         String retorno;
         int valor = 0;
@@ -268,7 +308,7 @@ public class Database {
                     + "9- Sair \n\n");
             try{
                 valor = Integer.parseInt(retorno);
-            }catch (Exception ex){
+            }catch (NumberFormatException ex){
                 System.out.println("Selección non válida");
             }
         }
